@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  cpf       String    @unique
+  password  String
+  avatar    String    @default("default") //aqui será atribuida uma foto padrão
+  xp        Int       @default(0)
+  level     Int       @default(1)
+  deletedAt DateTime?
+
+  Activities           Activities[]
+  ActivityParticipants ActivityParticipants[]
+  UserAchievements     UserAchievements[]
+  Preferences          Preferences[]
+}
+
+model Achievements {
+  id               String             @id @default(uuid())
+  name             String
+  criterion        String
+  UserAchievements UserAchievements[]
+}
+
+model ActivityTypes {
+  id          String        @id @default(uuid())
+  name        String
+  description String
+  image       String
+  Activities  Activities[]
+  Preferences Preferences[]
+}
+
+model ActivityAddresses {
+  id        String @id @default(uuid())
+  latitude  Float
+  longitude Float
+
+  activities  Activities @relation(fields: [activitiyId], references: [id])
+  activitiyId String     @unique
+}
+
+model Activities {
+  id               String        @id @default(uuid())
+  title            String
+  description      String
+  confirmationCode String
+  image            String
+  scheduledDate    DateTime // conferir
+  createdAt        DateTime
+  deletedAt        DateTime?
+  completedAt      DateTime?
+  isPrivate        Boolean
+  creators         Users         @relation(fields: [creatorId], references: [id])
+  types            ActivityTypes @relation(fields: [type], references: [id])
+
+  type      String
+  creatorId String
+
+  ActivityAddresses    ActivityAddresses?
+  ActivityParticipants ActivityParticipants[]
+}
+
+model ActivityParticipants {
+  id          String     @id @default(uuid())
+  approved    Boolean    @default(false)
+  confirmedAt DateTime?
+  usersId     Users      @relation(fields: [userId], references: [id])
+  activitysId Activities @relation(fields: [activityId], references: [id])
+
+  activityId String
+  userId     String
+}
+
+model UserAchievements {
+  achievements Achievements @relation(fields: [achievementId], references: [id])
+  usersId      Users        @relation(fields: [userId], references: [id])
+
+  achievementId String
+  userId        String
+
+  @@id([achievementId, userId])
+}
+
+model Preferences {
+  usersId Users         @relation(fields: [userId], references: [id])
+  typesId ActivityTypes @relation(fields: [typeId], references: [id])
+
+  userId String
+  typeId String
+
+  @@id([userId, typeId])
+}
